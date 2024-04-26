@@ -64,6 +64,68 @@ void Application::PreUpdate()
 // ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// /////
 void Application::Update()
 {
+	//カメラ行列の更新
+	{
+		//どれくらいの大きさ
+		Math::Matrix _mScale = Math::Matrix::CreateScale(1);
+
+		//どれだけ傾けているか
+		Math::Matrix _mRotationX = Math::Matrix::CreateRotationX(DirectX::XMConvertToRadians(m_rotate.x));
+		Math::Matrix _mRotationY = Math::Matrix::CreateRotationY(DirectX::XMConvertToRadians(m_rotate.y));
+		Math::Matrix _mRotationZ = Math::Matrix::CreateRotationZ(DirectX::XMConvertToRadians(m_rotate.z));
+		
+		//どこに配置してるか
+		Math::Matrix _mTrans=Math::Matrix::CreateTranslation(0,6.0f,-5.0f);
+		
+		//カメラの「ワールド行列」を生成し、適応させる
+		Math::Matrix _worldMat = _mScale * _mRotationX * _mTrans * _mRotationY*_mRotationZ;//<-行列の合成(1年の時に習ったやつ)
+													//計算順序によっては自転、公転することもできる
+		m_spCamera->SetCameraMatrix(_worldMat);
+
+		//ハム太郎の更新
+		Math::Vector3 _pos;
+		if (GetAsyncKeyState('W') & 0x8000)
+		{
+			m_rotate.x -= movePojnt;
+		}
+		if (GetAsyncKeyState('A') & 0x8000)
+		{
+			m_rotate.y -= movePojnt;
+		}
+		if (GetAsyncKeyState('S') & 0x8000)
+		{
+			m_rotate.x += movePojnt;
+		}
+		if (GetAsyncKeyState('D') & 0x8000)
+		{
+			m_rotate.y += movePojnt;
+		}
+		m_HamuWorld=Math::Matrix
+			
+	}
+	if (GetAsyncKeyState(VK_UP) & 0x8000)
+	{
+		m_pos.z += 1;
+	}
+	if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+	{
+		m_pos.z -= 1;
+	}
+	
+	
+	
+	if (GetAsyncKeyState('W') & 0x8000)
+	{
+		m_rotate.x -= movePojnt;
+	}
+	if (GetAsyncKeyState('Q') & 0x8000)
+	{
+		m_rotate.z += movePojnt;
+	}
+	if (GetAsyncKeyState('E') & 0x8000)
+	{
+		m_rotate.z -= movePojnt;
+	}
 }
 
 // ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// /////
@@ -100,6 +162,7 @@ void Application::KdPostDraw()
 // ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// /////
 void Application::PreDraw()
 {
+	m_spCamera->SetToShader();
 }
 
 // ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// /////
@@ -119,6 +182,10 @@ void Application::Draw()
 	// 陰影のあるオブジェクト(不透明な物体や2Dキャラ)はBeginとEndの間にまとめてDrawする
 	KdShaderManager::Instance().m_StandardShader.BeginLit();
 	{
+		
+
+		KdShaderManager::Instance().m_StandardShader.DrawPolygon(*m_spPoly, m_HamuWorld);
+		KdShaderManager::Instance().m_StandardShader.DrawModel(*m_spModel);
 	}
 	KdShaderManager::Instance().m_StandardShader.EndLit();
 
@@ -178,9 +245,9 @@ bool Application::Init(int w, int h)
 	// フルスクリーン確認
 	//===================================================================
 	bool bFullScreen = false;
-	if (MessageBoxA(m_window.GetWndHandle(), "フルスクリーンにしますか？", "確認", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == IDYES) {
+	/*if (MessageBoxA(m_window.GetWndHandle(), "フルスクリーンにしますか？", "確認", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == IDYES) {
 		bFullScreen = true;
-	}
+	}*/
 
 	//===================================================================
 	// Direct3D初期化
@@ -221,9 +288,33 @@ bool Application::Init(int w, int h)
 	//===================================================================
 	KdAudioManager::Instance().Init();
 
+	//===================================================================
+	// カメラ初期化
+	//===================================================================
+	//生成方法　　std::make_shared<生成したいクラス>();
+	m_spCamera	= std::make_shared<KdCamera>();
+
+	//===================================================================
+	// ハムスター初期化
+	//===================================================================
+	m_spPoly	= std::make_shared<KdSquarePolygon>();
+	//m_spPoly->SetMaterial("Asset/Data/LessonData/Character/Hamu.png");
+	//m_spPoly->SetMaterial("Asset/Data/LessonData/Character/Hamu.png");
+	m_spPoly->SetMaterial("Asset/Data/LessonData/Character/evil wisp.png");
+	m_spPoly->SetPivot(KdSquarePolygon::PivotType::Center_Bottom);
+	//===================================================================
+	// 地形初期化
+	//===================================================================
+	m_spModel = std::make_shared<KdModelData>();
+	m_spModel->Load("Asset/Data/LessonData/Terrain/Terrain.gltf");
+
+	m_pos = { 0,0,5 };
+	m_rotate.x = 45;
+
 	return true;
 
-	test = 15;
+
+
 }
 
 // ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// /////

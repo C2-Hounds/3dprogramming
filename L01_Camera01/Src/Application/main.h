@@ -51,7 +51,22 @@ private:
 	// ゲーム終了フラグ trueで終了する
 	bool		m_endFlag = false;
 
-	int test;	//テスト用
+	//カメラ
+	std::shared_ptr<KdCamera>			m_spCamera	= nullptr;
+	//板ポリゴン
+
+	std::shared_ptr<KdSquarePolygon>	m_spPoly	= nullptr;
+	Math::Matrix						m_HamuWorld = Math::Matrix::Identity;
+
+	//地形モデル
+	std::shared_ptr<KdModelData>		m_spModel = nullptr;
+
+	Math::Vector3 m_pos;
+	
+	Math::Vector3 m_rotate;
+
+	float movePojnt = 0.2;
+	//int* :生ポインタという(system:結構深いところには使うみたい)
 
 //=====================================================
 // シングルトンパターン
