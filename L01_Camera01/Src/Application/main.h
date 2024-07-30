@@ -53,19 +53,17 @@ private:
 
 	//カメラ
 	std::shared_ptr<KdCamera>			m_spCamera	= nullptr;
-	//板ポリゴン
+	
+	
 
-	std::shared_ptr<KdSquarePolygon>	m_spPoly	= nullptr;
-	Math::Matrix						m_HamuWorld = Math::Matrix::Identity;
-
-	//地形モデル
-	std::shared_ptr<KdModelData>		m_spModel = nullptr;
+	//list型の可変長を作ってみよう
+	std::list<std::shared_ptr<KdGameObject>> m_Objlist;
 
 	Math::Vector3 m_pos;
 	
 	Math::Vector3 m_rotate;
 
-	float movePojnt = 0.2;
+	float movePojnt = 2;
 	//int* :生ポインタという(system:結構深いところには使うみたい)
 
 //=====================================================

@@ -1,5 +1,6 @@
 ﻿#include "main.h"
-
+#include"HamuHamu.h"
+#include"Terrain.h"
 // ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// ///// /////
 // エントリーポイント
 // アプリケーションはこの関数から進行する
@@ -70,6 +71,7 @@ void Application::Update()
 		Math::Matrix _mScale = Math::Matrix::CreateScale(1);
 
 		//どれだけ傾けているか
+		Math::Matrix _mStandRotationX = Math::Matrix::CreateRotationX(DirectX::XMConvertToRadians(45));
 		Math::Matrix _mRotationX = Math::Matrix::CreateRotationX(DirectX::XMConvertToRadians(m_rotate.x));
 		Math::Matrix _mRotationY = Math::Matrix::CreateRotationY(DirectX::XMConvertToRadians(m_rotate.y));
 		Math::Matrix _mRotationZ = Math::Matrix::CreateRotationZ(DirectX::XMConvertToRadians(m_rotate.z));
@@ -78,29 +80,40 @@ void Application::Update()
 		Math::Matrix _mTrans=Math::Matrix::CreateTranslation(0,6.0f,-5.0f);
 		
 		//カメラの「ワールド行列」を生成し、適応させる
-		Math::Matrix _worldMat = _mScale * _mRotationX * _mTrans * _mRotationY*_mRotationZ;//<-行列の合成(1年の時に習ったやつ)
+		Math::Matrix _worldMat = (_mScale * _mStandRotationX * _mTrans * _mRotationX * _mRotationY * _mRotationZ);//<-行列の合成(1年の時に習ったやつ)
 													//計算順序によっては自転、公転することもできる
 		m_spCamera->SetCameraMatrix(_worldMat);
 
+			Math::Vector3 _pos;
+			float hamumovePoint = 0.1f;
 		//ハム太郎の更新
-		Math::Vector3 _pos;
-		if (GetAsyncKeyState('W') & 0x8000)
+		{
+				//全ゲームオブジェクト更新
+
+				// 範囲ベースfor文
+				for (std::shared_ptr<KdGameObject>obj : m_Objlist)
+				{
+					obj->Update();
+				}
+		}
+
+		if (GetAsyncKeyState(VK_UP) & 0x8000)
 		{
 			m_rotate.x -= movePojnt;
 		}
-		if (GetAsyncKeyState('A') & 0x8000)
+		if (GetAsyncKeyState(VK_LEFT) & 0x8000)
 		{
 			m_rotate.y -= movePojnt;
 		}
-		if (GetAsyncKeyState('S') & 0x8000)
+		if (GetAsyncKeyState(VK_DOWN) & 0x8000)
 		{
 			m_rotate.x += movePojnt;
 		}
-		if (GetAsyncKeyState('D') & 0x8000)
+		if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
 		{
 			m_rotate.y += movePojnt;
 		}
-		m_HamuWorld=Math::Matrix
+		//m_HamuWorld=Math::Matrix
 			
 	}
 	if (GetAsyncKeyState(VK_UP) & 0x8000)
@@ -114,10 +127,7 @@ void Application::Update()
 	
 	
 	
-	if (GetAsyncKeyState('W') & 0x8000)
-	{
-		m_rotate.x -= movePojnt;
-	}
+	
 	if (GetAsyncKeyState('Q') & 0x8000)
 	{
 		m_rotate.z += movePojnt;
@@ -174,6 +184,8 @@ void Application::Draw()
 	// 光を遮るオブジェクト(不透明な物体や2Dキャラ)はBeginとEndの間にまとめてDrawする
 	KdShaderManager::Instance().m_StandardShader.BeginGenerateDepthMapFromLight();
 	{
+		
+		
 	}
 	KdShaderManager::Instance().m_StandardShader.EndGenerateDepthMapFromLight();
 
@@ -183,9 +195,12 @@ void Application::Draw()
 	KdShaderManager::Instance().m_StandardShader.BeginLit();
 	{
 		
+		//全ゲームオブジェクト描画
 
-		KdShaderManager::Instance().m_StandardShader.DrawPolygon(*m_spPoly, m_HamuWorld);
-		KdShaderManager::Instance().m_StandardShader.DrawModel(*m_spModel);
+		for (std::shared_ptr<KdGameObject>obj : m_Objlist)
+		{
+			obj->DrawLit();
+		}
 	}
 	KdShaderManager::Instance().m_StandardShader.EndLit();
 
@@ -297,19 +312,25 @@ bool Application::Init(int w, int h)
 	//===================================================================
 	// ハムスター初期化
 	//===================================================================
-	m_spPoly	= std::make_shared<KdSquarePolygon>();
-	//m_spPoly->SetMaterial("Asset/Data/LessonData/Character/Hamu.png");
-	//m_spPoly->SetMaterial("Asset/Data/LessonData/Character/Hamu.png");
-	m_spPoly->SetMaterial("Asset/Data/LessonData/Character/evil wisp.png");
-	m_spPoly->SetPivot(KdSquarePolygon::PivotType::Center_Bottom);
+	std::shared_ptr<HamuHamu> _Hamu = std::make_shared<HamuHamu>();
+	
+	//※重要※
+	m_Objlist.push_back(_Hamu);
+
 	//===================================================================
 	// 地形初期化
 	//===================================================================
-	m_spModel = std::make_shared<KdModelData>();
-	m_spModel->Load("Asset/Data/LessonData/Terrain/Terrain.gltf");
+	std::shared_ptr<Terrain> _terrain = std::make_shared<Terrain>();
+
+	//※重要※
+	m_Objlist.push_back(_terrain);
+	for (std::shared_ptr<KdGameObject> _obj : m_Objlist)
+	{
+		_obj->Init();
+	}
 
 	m_pos = { 0,0,5 };
-	m_rotate.x = 45;
+	//m_rotate.x = 45;
 
 	return true;
 
